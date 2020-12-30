@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(findViewById(R.id.toolbar))
 
         findViewById<FloatingActionButton>(R.id.fab).setOnClickListener { view ->
-            viewModel.getSteamGames()
+            //viewModel.getSteamGames()
         }
     }
 

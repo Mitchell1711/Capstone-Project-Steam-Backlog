@@ -26,7 +26,7 @@ class SteamAPI {
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
 
-            // Return the Retrofit NumbersApiService
+            // Return the Retrofit SteamApiService
             return steamAPI.create(SteamAPIService::class.java)
         }
     }

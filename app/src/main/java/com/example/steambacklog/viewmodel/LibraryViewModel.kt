@@ -33,12 +33,12 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
      * The viewModelScope is bound to Dispatchers.Main and will automatically be cancelled when the ViewModel is cleared.
      * Extension method of lifecycle-viewmodel-ktx library
      */
-    fun getSteamGames() {
+    fun getSteamGames(userID: Long) {
         viewModelScope.launch {
             try {
                 //the triviaRepository sets it's own livedata property
                 //our own library LiveData property points to te one in that repository
-                libraryRepository.getSteamLibrary()
+                libraryRepository.getSteamLibrary(userID)
             } catch (error: LibraryRepository.LibraryRefreshError) {
                 _errorText.value = error.message
                 Log.e("Library error", error.cause.toString())

@@ -13,6 +13,6 @@ data class Games(
     @SerializedName("playtime_mac_forever") val playtime_mac_forever : Int,
     @SerializedName("playtime_linux_forever") val playtime_linux_forever : Int,
 
-//        @SerializedName("completion_status") var completion_Status: Completion,
-//        @SerializedName("note") var note: String
+    var completion_Status: Completion,
+    var note: String
 )

@@ -30,14 +30,14 @@ class LibraryFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewModel.getSteamGames()
+        viewModel.getSteamGames(76561198257218665)
 
         observeLibrary()
     }
 
     private fun observeLibrary() {
         viewModel.library.observe(viewLifecycleOwner, Observer {
-            tv_libraryCount.text = it?.response?.game_count.toString()
+            tv_libraryCount.text = it?.response?.games?.get(1)?.name
         })
 
         // Observe the error message.
@@ -45,5 +45,4 @@ class LibraryFragment : Fragment() {
             Toast.makeText(activity, it, Toast.LENGTH_SHORT).show()
         })
     }
-
 }

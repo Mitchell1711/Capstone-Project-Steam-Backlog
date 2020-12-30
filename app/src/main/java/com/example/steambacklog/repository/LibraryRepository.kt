@@ -24,11 +24,11 @@ class LibraryRepository {
     /**
      * suspend function that calls a suspend function from the steamAPI call
      */
-    suspend fun getSteamLibrary()  {
+    suspend fun getSteamLibrary(userID : Long)  {
         try {
             //timeout the request after 5 seconds
             val result = withTimeout(5_000) {
-                steamAPIService.getSteamLibrary()
+                steamAPIService.getSteamLibrary(key = "7BE4749AE70DF6436AF3A189A6A1A9B6", userID, include_appinfo = true, include_played_free_games = true, format = "json")
             }
 
             _library.value = result
