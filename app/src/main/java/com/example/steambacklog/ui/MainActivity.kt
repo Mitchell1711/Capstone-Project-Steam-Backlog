@@ -1,4 +1,4 @@
-package com.example.steambacklog
+package com.example.steambacklog.ui
 
 import android.os.Bundle
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -6,8 +6,14 @@ import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
+import androidx.activity.viewModels
+import androidx.fragment.app.activityViewModels
+import com.example.steambacklog.R
+import com.example.steambacklog.viewmodel.LibraryViewModel
 
 class MainActivity : AppCompatActivity() {
+
+    private val viewModel: LibraryViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -15,8 +21,7 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(findViewById(R.id.toolbar))
 
         findViewById<FloatingActionButton>(R.id.fab).setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show()
+            viewModel.getSteamGames()
         }
     }
 
