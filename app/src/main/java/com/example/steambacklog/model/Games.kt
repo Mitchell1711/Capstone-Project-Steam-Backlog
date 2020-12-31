@@ -13,6 +13,12 @@ data class Games(
     @SerializedName("playtime_mac_forever") val playtime_mac_forever : Int,
     @SerializedName("playtime_linux_forever") val playtime_linux_forever : Int,
 
-    var completion_Status: Completion,
-    var note: String
-)
+//    var completion_Status: Completion,
+//    var note: String
+){
+    fun getIconUrl() =
+        "http://media.steampowered.com/steamcommunity/public/images/apps/$appid/$img_icon_url.jpg"
+
+    fun getLogoUrl() =
+        "http://media.steampowered.com/steamcommunity/public/images/apps/$appid/$img_logo_url.jpg"
+}
