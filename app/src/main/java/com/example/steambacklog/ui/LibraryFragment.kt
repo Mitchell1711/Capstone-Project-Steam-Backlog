@@ -8,12 +8,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Observer
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.steambacklog.R
 import com.example.steambacklog.model.Games
-import com.example.steambacklog.model.Response
 import com.example.steambacklog.recyclerview.GameAdapter
 import com.example.steambacklog.viewmodel.LibraryViewModel
 import kotlinx.android.synthetic.main.fragment_library.*
@@ -45,10 +44,15 @@ class LibraryFragment : Fragment() {
         observeLibrary()
     }
 
+    /**
+     * check this for drag drop between 2 recyclerviews
+     * https://github.com/jkozh/DragDropTwoRecyclerViews
+     */
+
     private fun initViews(){
         //init layout
-        rvLibrary.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
-        rvLibrary.adapter = gameAdapter
+        rvLibraryUnplayed.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
+        rvLibraryUnplayed.adapter = gameAdapter
     }
 
     private fun observeLibrary() {
@@ -65,7 +69,12 @@ class LibraryFragment : Fragment() {
         })
     }
 
-    private fun onGameClick(games: Games){
-        Log.i("Game", "Clicked")
+    private fun onGameClick(game: Games){
+        //wrap selected game object in a bundle
+        val args = Bundle()
+        args.putParcelable(SELECTED_GAME, game)
+
+        //move to the gameview fragment with bundle
+        findNavController().navigate(R.id.action_LibraryFragment_to_GameviewFragment, args)
     }
 }

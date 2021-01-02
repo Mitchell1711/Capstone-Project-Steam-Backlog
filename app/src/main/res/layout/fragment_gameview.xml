@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".ui.GameviewFragment"
+    android:background="@color/bg_grey">
+
+    <ImageView
+        android:id="@+id/ivGamelogo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/tvGameName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textColor="@color/white"
+        android:textSize="24sp"
+        android:padding="12dp"
+        android:background="@color/highlight_teal"/>
+
+    <TextView
+        android:id="@+id/tvPlaytime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"
+        android:textSize="24sp"
+        android:padding="12dp"/>
+
+    <TextView
+        android:id="@+id/tvRating"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/tv_rating"
+        android:textColor="@color/white"
+        android:background="@color/highlight_teal"
+        android:textSize="18sp"
+        android:padding="8dp"
+        android:gravity="center"/>
+
+    <RatingBar
+        android:id="@+id/ratingBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/highlight_teal"/>
+</LinearLayout>

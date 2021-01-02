@@ -1,7 +1,10 @@
 package com.example.steambacklog.model
 
+import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
+import kotlinx.android.parcel.Parcelize
 
+@Parcelize
 data class Games(
     @SerializedName("appid") val appid : Int,
     @SerializedName("name") val name : String,
@@ -15,7 +18,7 @@ data class Games(
 
 //    var completion_Status: Completion,
 //    var note: String
-){
+) : Parcelable {
     fun getIconUrl() =
         "http://media.steampowered.com/steamcommunity/public/images/apps/$appid/$img_icon_url.jpg"
 
