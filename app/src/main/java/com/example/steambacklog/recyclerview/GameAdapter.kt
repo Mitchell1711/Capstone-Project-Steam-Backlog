@@ -4,13 +4,12 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Filter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.request.target.Target
 import com.example.steambacklog.R
 import com.example.steambacklog.model.Games
 import kotlinx.android.synthetic.main.item_game.view.*
-import kotlin.reflect.KFunction0
 
 class GameAdapter(private var games: List<Games>, private val onClick: (Games) -> Unit) :
     RecyclerView.Adapter<GameAdapter.ViewHolder>() {
@@ -39,7 +38,7 @@ class GameAdapter(private var games: List<Games>, private val onClick: (Games) -
         }
 
         fun bind(games: Games) {
-            Glide.with(context).load(games.getLogoUrl()).into(itemView.ivGame)
+            Glide.with(context).load(games.getLogoUrl()).placeholder(R.drawable.placeholder).into(itemView.ivGame)
         }
     }
 

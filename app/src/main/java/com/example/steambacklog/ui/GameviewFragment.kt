@@ -41,10 +41,16 @@ class GameviewFragment : Fragment() {
         tvGameName.text = gameObj?.name
 
         //fill in the playtime
-        val timeText: String
+        var timeText: String
 
-        timeText = if(gameObj?.playtime_forever!! < 60) gameObj.playtime_forever.toString()+" Minutes"
-        else (gameObj.playtime_forever / 60).toString()+" Hours"
+        if(gameObj?.playtime_forever!! < 60){
+            timeText = gameObj.playtime_forever.toString()+" Minute"
+            if(gameObj.playtime_forever != 1) timeText += "s"
+        }
+        else{
+            timeText = (gameObj.playtime_forever / 60).toString()+" Hour"
+            if(gameObj.playtime_forever >= 120) timeText += "s"
+        }
 
         tvPlaytime.text = timeText
 

@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import android.widget.Toast
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.steambacklog.R
@@ -15,6 +16,7 @@ import com.example.steambacklog.model.Games
 import com.example.steambacklog.recyclerview.GameAdapter
 import com.example.steambacklog.viewmodel.LibraryViewModel
 import kotlinx.android.synthetic.main.fragment_library.*
+import java.util.*
 
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.
@@ -22,8 +24,16 @@ import kotlinx.android.synthetic.main.fragment_library.*
 class LibraryFragment : Fragment() {
 
     private val viewModel: LibraryViewModel by activityViewModels()
-    private val games = arrayListOf<Games>()
-    private val gameAdapter = GameAdapter(games, ::onGameClick)
+
+    //initialize lists and adapters for recyclerview
+    private val games = arrayOf(arrayListOf<Games>(), arrayListOf(), arrayListOf())
+
+    private val gameAdapterUnplayed = GameAdapter(games[0], ::onGameClick)
+    private val gameAdapterPlayed = GameAdapter(games[1], ::onGameClick)
+    private val gameAdapterFinished = GameAdapter(games[2], ::onGameClick)
+
+    private val userID = 76561198078057726
+    //76561198257218665
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
@@ -41,26 +51,12 @@ class LibraryFragment : Fragment() {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 return true
             }
+            //called each time the search text gets updated
             override fun onQueryTextChange(query: String?): Boolean {
-                Log.d("onQueryTextChange", "query: $query")
-                filter(query)
+                if(query != null) filter(query)
                 return true
             }
         })
-    }
-
-    private fun filter(filterString: String?){
-        val gamesFilter = arrayListOf<Games>()
-
-        for(game in games){
-            if (filterString != null) {
-                if(game.name.toLowerCase().contains(filterString.toLowerCase())){
-                    gamesFilter.add(game)
-                }
-            }
-        }
-
-        gameAdapter.filterList(gamesFilter)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -68,7 +64,7 @@ class LibraryFragment : Fragment() {
 
         initViews()
 
-        viewModel.getSteamGames(76561198257218665)
+        viewModel.getSteamGames(userID)
 
         observeLibrary()
     }
@@ -81,21 +77,48 @@ class LibraryFragment : Fragment() {
     private fun initViews(){
         //init layout
         rvLibraryUnplayed.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
-        rvLibraryUnplayed.adapter = gameAdapter
+        rvLibraryUnplayed.adapter = gameAdapterUnplayed
+
+        rvLibraryPlayed.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
+        rvLibraryPlayed.adapter = gameAdapterPlayed
+
+        rvLibraryFinished.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
+        rvLibraryFinished.adapter = gameAdapterFinished
+
+        createItemTouchHelper().attachToRecyclerView(rvLibraryUnplayed)
     }
 
     private fun observeLibrary() {
         viewModel.library.observe(viewLifecycleOwner, {
-            games.clear()
-            games.addAll(it.response.games)
+            for (list in games) list.clear()
 
-            gameAdapter.notifyDataSetChanged()
+            for(game in it.response.games){
+                if(game.playtime_forever == 0) games[0].add(game)
+                else games[1].add(game)
+            }
+
+            gameAdapterUnplayed.notifyDataSetChanged()
         })
 
         // Observe the error message.
         viewModel.errorText.observe(viewLifecycleOwner, {
             Toast.makeText(activity, it, Toast.LENGTH_SHORT).show()
         })
+    }
+
+    private fun filter(filterString: String){
+        val gamesFilter = arrayOf(arrayListOf<Games>(), arrayListOf(), arrayListOf())
+
+        for((index, list) in games.withIndex()) {
+            for (game in list) {
+                if (game.name.toLowerCase().contains(filterString.toLowerCase())) {
+                    gamesFilter[index].add(game)
+                }
+            }
+        }
+        gameAdapterUnplayed.filterList(gamesFilter[0])
+        gameAdapterPlayed.filterList(gamesFilter[1])
+        gameAdapterFinished.filterList(gamesFilter[2])
     }
 
     private fun onGameClick(game: Games){
@@ -105,5 +128,25 @@ class LibraryFragment : Fragment() {
 
         //move to the gameview fragment with bundle
         findNavController().navigate(R.id.action_LibraryFragment_to_GameviewFragment, args)
+    }
+
+    private fun createItemTouchHelper(): ItemTouchHelper {
+        val itemTouchHelperCallback = object : ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP or ItemTouchHelper.DOWN or
+        ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT, 0) {
+            override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
+                val fromPos = viewHolder.adapterPosition
+                val toPos = target.adapterPosition
+
+                //Collections.swap(gamesUnplayed, fromPos, toPos)
+
+                gameAdapterUnplayed.notifyItemMoved(fromPos, toPos)
+                return true
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                //nothing
+            }
+        }
+        return ItemTouchHelper(itemTouchHelperCallback)
     }
 }
