@@ -13,4 +13,6 @@
     <string name="tv_in_progress">In Progress</string>
     <string name="tv_finished">Finished</string>
     <string name="tv_rating">Your Rating</string>
+    <string name="search_title">Search</string>
+    <string name="search_hint">Search</string>
 </resources>
