@@ -15,4 +15,8 @@
     <string name="tv_rating">Your Rating</string>
     <string name="search_title">Search</string>
     <string name="search_hint">Search</string>
+    <string name="change_user">Change to a different user:</string>
+    <string name="userID">Insert userID</string>
+    <string name="userID_title">userID_title</string>
+    <string name="dialog_ok_btn">Ok</string>
 </resources>

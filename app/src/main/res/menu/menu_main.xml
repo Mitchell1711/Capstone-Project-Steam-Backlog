@@ -8,4 +8,11 @@
         android:title="@string/search_title"
         app:actionViewClass="android.widget.SearchView"
         app:showAsAction="ifRoom|collapseActionView" />
+    <item
+        android:id="@+id/userID"
+        android:icon="@android:drawable/ic_menu_add"
+        android:orderInCategory="100"
+        android:title="@string/userID_title"
+        android:visible="true"
+        app:showAsAction="ifRoom" />
 </menu>

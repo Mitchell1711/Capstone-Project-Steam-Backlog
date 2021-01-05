@@ -1,8 +1,11 @@
 package com.example.steambacklog.ui
 
+import android.app.AlertDialog
+import android.content.DialogInterface
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.widget.EditText
 import android.widget.SearchView
 import androidx.fragment.app.Fragment
 import android.widget.Toast
@@ -57,16 +60,19 @@ class LibraryFragment : Fragment() {
                 return true
             }
         })
+
+        val changeUserItem: MenuItem = menu.findItem(R.id.userID)
+
+        changeUserItem.setOnMenuItemClickListener {
+            showChangeUserDialog()
+            true
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         initViews()
-
-        viewModel.getSteamGames(userID)
-
-        observeLibrary()
     }
 
     /**
@@ -88,6 +94,9 @@ class LibraryFragment : Fragment() {
         createItemTouchHelper().attachToRecyclerView(rvLibraryUnplayed)
     }
 
+    /**
+     * Check for changes in library dataset
+     */
     private fun observeLibrary() {
         viewModel.library.observe(viewLifecycleOwner, {
             for (list in games) list.clear()
@@ -106,6 +115,9 @@ class LibraryFragment : Fragment() {
         })
     }
 
+    /**
+     * filter library based on toolbar search input
+     */
     private fun filter(filterString: String){
         val gamesFilter = arrayOf(arrayListOf<Games>(), arrayListOf(), arrayListOf())
 
@@ -121,6 +133,26 @@ class LibraryFragment : Fragment() {
         gameAdapterFinished.filterList(gamesFilter[2])
     }
 
+    /**
+     * show the dialog that allows you to change between different user IDs
+     */
+    private fun showChangeUserDialog(){
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setTitle(getString(R.string.change_user))
+        val dialogLayout = layoutInflater.inflate(R.layout.change_user_dialog, null)
+        val userID = dialogLayout.findViewById<EditText>(R.id.txt_userID)
+
+        builder.setView(dialogLayout)
+        builder.setPositiveButton(R.string.dialog_ok_btn) { _: DialogInterface, _: Int ->
+            viewModel.getSteamGames(userID.text.toString().toLong())
+            observeLibrary()
+        }
+        builder.show()
+    }
+
+    /**
+     * check if a game object inside the recyclerview got selected
+     */
     private fun onGameClick(game: Games){
         //wrap selected game object in a bundle
         val args = Bundle()
@@ -130,6 +162,9 @@ class LibraryFragment : Fragment() {
         findNavController().navigate(R.id.action_LibraryFragment_to_GameviewFragment, args)
     }
 
+    /**
+     * YEAH
+     */
     private fun createItemTouchHelper(): ItemTouchHelper {
         val itemTouchHelperCallback = object : ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP or ItemTouchHelper.DOWN or
         ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT, 0) {
