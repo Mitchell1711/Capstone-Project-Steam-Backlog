@@ -9,6 +9,7 @@ import android.widget.Button
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.example.steambacklog.R
+import com.example.steambacklog.model.Completion
 import com.example.steambacklog.model.Games
 import kotlinx.android.synthetic.main.fragment_gameview.*
 
@@ -29,7 +30,6 @@ class GameviewFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         fillLayout()
     }
 
@@ -52,7 +52,14 @@ class GameviewFragment : Fragment() {
             if(gameObj.playtime_forever >= 120) timeText += "s"
         }
 
-        tvPlaytime.text = timeText
+        tvPlaytime.append(timeText)
+
+        //fill in completion status
+        when(gameObj.completion){
+            Completion.UNPLAYED -> tvCompletion.append(getString(R.string.tv_unplayed))
+            Completion.IN_PROGRESS -> tvCompletion.append(getString(R.string.tv_in_progress))
+            Completion.FINISHED -> tvCompletion.append(getString(R.string.tv_finished))
+        }
 
         //load in the image at the top
         context?.let { Glide.with(it).load(gameObj.getLogoUrl()).into(ivGamelogo) }

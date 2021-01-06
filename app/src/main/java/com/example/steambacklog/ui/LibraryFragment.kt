@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.steambacklog.R
+import com.example.steambacklog.model.Completion
 import com.example.steambacklog.model.Games
 import com.example.steambacklog.recyclerview.GameAdapter
 import com.example.steambacklog.viewmodel.LibraryViewModel
@@ -104,8 +105,14 @@ class LibraryFragment : Fragment() {
             for (list in games) list.clear()
 
             for(game in it.response.games){
-                if(game.playtime_forever == 0) games[0].add(game)
-                else games[1].add(game)
+                if(game.playtime_forever == 0) {
+                    games[0].add(game)
+                    game.completion = Completion.UNPLAYED
+                }
+                else {
+                    games[1].add(game)
+                    game.completion = Completion.IN_PROGRESS
+                }
             }
 
             gameAdapterUnplayed.notifyDataSetChanged()
@@ -178,13 +185,26 @@ class LibraryFragment : Fragment() {
             // Callback triggered when a user swiped an item.
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val position = viewHolder.adapterPosition
+                //ugly switch statement to change completion status of the games
                 when (adapterIndex){
-                    0 -> if(direction == ItemTouchHelper.RIGHT) games[1].add(games[0][position])
-                    1 -> {
-                        if(direction == ItemTouchHelper.RIGHT) games[2].add(games[1][position])
-                        else games[0].add(games[1][position])
+                    0 -> if(direction == ItemTouchHelper.RIGHT) {
+                        games[0][position].completion = Completion.IN_PROGRESS
+                        games[1].add(games[0][position])
                     }
-                    2 -> if(direction == ItemTouchHelper.LEFT) games[1].add(games[2][position])
+                    1 -> {
+                        if(direction == ItemTouchHelper.RIGHT) {
+                            games[1][position].completion = Completion.FINISHED
+                            games[2].add(games[1][position])
+                        }
+                        else {
+                            games[1][position].completion = Completion.UNPLAYED
+                            games[0].add(games[1][position])
+                        }
+                    }
+                    2 -> if(direction == ItemTouchHelper.LEFT) {
+                        games[2][position].completion = Completion.IN_PROGRESS
+                        games[1].add(games[2][position])
+                    }
                 }
                 games[adapterIndex].removeAt(position)
 

@@ -12,4 +12,5 @@
     <color name="highlight_teal">#056678</color>
     <color name="appbar_teal">#033C47</color>
     <color name="topbar_teal">#02272E</color>
+    <color name="hint_grey">#AFAFAF</color>
 </resources>

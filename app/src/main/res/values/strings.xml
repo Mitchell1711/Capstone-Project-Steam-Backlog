@@ -18,5 +18,9 @@
     <string name="change_user">Change to a different user:</string>
     <string name="userID">Insert userID</string>
     <string name="userID_title">userID_title</string>
-    <string name="dialog_ok_btn">Ok</string>
+    <string name="dialog_ok_btn">OK</string>
+    <string name="note">Note</string>
+    <string name="txtPlaytime">Playtime:\u0020</string>
+    <string name="txtCompletion">Completion Status:\u0020</string>
+    <string name="addNote">Insert note…</string>
 </resources>
