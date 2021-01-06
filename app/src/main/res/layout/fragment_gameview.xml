@@ -4,9 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/highlight_teal"
     android:orientation="vertical"
-    tools:context=".ui.GameviewFragment"
-    android:background="@color/bg_grey">
+    tools:context=".ui.GameviewFragment">
 
     <ImageView
         android:id="@+id/ivGamelogo"
@@ -18,33 +18,47 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:textColor="@color/white"
-        android:textSize="24sp"
         android:padding="12dp"
-        android:background="@color/highlight_teal"/>
+        android:textColor="@color/white"
+        android:textSize="24sp" />
 
     <TextView
         android:id="@+id/tvPlaytime"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:padding="12dp"
         android:textColor="@color/white"
         android:textSize="24sp"
-        android:padding="12dp"/>
+        android:background="@color/bg_grey"/>
+
+    <TextView
+        android:id="@+id/tvCompletion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/bg_grey"
+        android:padding="12dp"
+        android:textColor="@color/white"
+        android:textSize="24sp" />
 
     <TextView
         android:id="@+id/tvRating"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="8dp"
         android:text="@string/tv_rating"
         android:textColor="@color/white"
-        android:background="@color/highlight_teal"
-        android:textSize="18sp"
-        android:padding="8dp"
-        android:gravity="center"/>
+        android:textSize="18sp" />
 
     <RatingBar
         android:id="@+id/ratingBar"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@color/highlight_teal"/>
+        android:layout_gravity="center"/>
+
+    <TextView
+        android:id="@+id/tvNote"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/bg_grey"/>
 </LinearLayout>

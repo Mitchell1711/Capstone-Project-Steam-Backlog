@@ -35,7 +35,7 @@ class LibraryFragment : Fragment() {
     private val gameAdapterPlayed = GameAdapter(games[1], ::onGameClick)
     private val gameAdapterFinished = GameAdapter(games[2], ::onGameClick)
 
-    private val userID = 76561198078057726
+    //private val userID = 76561198078057726
     //76561198257218665
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -91,7 +91,9 @@ class LibraryFragment : Fragment() {
         rvLibraryFinished.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
         rvLibraryFinished.adapter = gameAdapterFinished
 
-        createItemTouchHelper().attachToRecyclerView(rvLibraryUnplayed)
+        createItemTouchHelper(0).attachToRecyclerView(rvLibraryUnplayed)
+        createItemTouchHelper(1).attachToRecyclerView(rvLibraryPlayed)
+        createItemTouchHelper(2).attachToRecyclerView(rvLibraryFinished)
     }
 
     /**
@@ -165,21 +167,30 @@ class LibraryFragment : Fragment() {
     /**
      * YEAH
      */
-    private fun createItemTouchHelper(): ItemTouchHelper {
-        val itemTouchHelperCallback = object : ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP or ItemTouchHelper.DOWN or
-        ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT, 0) {
-            override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
-                val fromPos = viewHolder.adapterPosition
-                val toPos = target.adapterPosition
-
-                //Collections.swap(gamesUnplayed, fromPos, toPos)
-
-                gameAdapterUnplayed.notifyItemMoved(fromPos, toPos)
-                return true
+    private fun createItemTouchHelper(adapterIndex: Int): ItemTouchHelper {
+        val itemTouchHelperCallback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
+            // Enables or Disables the ability to move items up and down.
+            override fun onMove(
+                    recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
+                return false
             }
 
+            // Callback triggered when a user swiped an item.
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                //nothing
+                val position = viewHolder.adapterPosition
+                when (adapterIndex){
+                    0 -> if(direction == ItemTouchHelper.RIGHT) games[1].add(games[0][position])
+                    1 -> {
+                        if(direction == ItemTouchHelper.RIGHT) games[2].add(games[1][position])
+                        else games[0].add(games[1][position])
+                    }
+                    2 -> if(direction == ItemTouchHelper.LEFT) games[1].add(games[2][position])
+                }
+                games[adapterIndex].removeAt(position)
+
+                gameAdapterUnplayed.notifyDataSetChanged()
+                gameAdapterPlayed.notifyDataSetChanged()
+                gameAdapterFinished.notifyDataSetChanged()
             }
         }
         return ItemTouchHelper(itemTouchHelperCallback)

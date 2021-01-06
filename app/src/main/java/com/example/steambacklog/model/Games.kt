@@ -15,9 +15,6 @@ data class Games(
     @SerializedName("playtime_windows_forever") val playtime_windows_forever : Int,
     @SerializedName("playtime_mac_forever") val playtime_mac_forever : Int,
     @SerializedName("playtime_linux_forever") val playtime_linux_forever : Int,
-
-//    var completion_Status: Completion,
-//    var note: String
 ) : Parcelable {
     fun getIconUrl() =
         "http://media.steampowered.com/steamcommunity/public/images/apps/$appid/$img_icon_url.jpg"
