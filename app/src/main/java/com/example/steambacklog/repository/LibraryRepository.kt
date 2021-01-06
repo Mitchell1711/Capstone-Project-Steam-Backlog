@@ -1,5 +1,6 @@
 package com.example.steambacklog.repository
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -7,17 +8,21 @@ import com.example.steambacklog.API.SteamAPI
 import com.example.steambacklog.API.SteamAPIService
 import com.example.steambacklog.model.Library
 import com.example.steambacklog.model.Response
+import com.example.steambacklog.room.LibraryDao
+import com.example.steambacklog.room.LibraryRoomDatabase
 import kotlinx.coroutines.withTimeout
 
-class LibraryRepository {
+class LibraryRepository(context: Context){
     private val steamAPIService: SteamAPIService = SteamAPI.createApi()
-
     private val _library: MutableLiveData<Response> = MutableLiveData()
 
-    /**
-     * Expose non MutableLiveData via getter
-     * Encapsulation :)
-     */
+    private val libraryDao: LibraryDao
+
+    init {
+        val database = LibraryRoomDatabase.getDatabase(context)
+        libraryDao = database!!.libraryDao()
+    }
+
     val library: LiveData<Response>
         get() = _library
 
@@ -36,6 +41,5 @@ class LibraryRepository {
             throw LibraryRefreshError("Unable to refresh Library", error)
         }
     }
-
     class LibraryRefreshError(message: String, cause: Throwable) : Throwable(message, cause)
 }
