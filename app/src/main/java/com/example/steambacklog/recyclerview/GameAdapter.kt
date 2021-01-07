@@ -41,9 +41,4 @@ class GameAdapter(private var games: List<Games>, private val onClick: (Games) -
             Glide.with(context).load(games.getLogoUrl()).placeholder(R.drawable.placeholder).into(itemView.ivGame)
         }
     }
-
-    fun filterList(filteredList: ArrayList<Games>){
-        games = filteredList
-        notifyDataSetChanged()
-    }
 }

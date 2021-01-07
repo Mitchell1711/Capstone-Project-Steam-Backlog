@@ -20,7 +20,9 @@ import com.example.steambacklog.model.Games
 import com.example.steambacklog.recyclerview.GameAdapter
 import com.example.steambacklog.viewmodel.LibraryViewModel
 import kotlinx.android.synthetic.main.fragment_library.*
+import java.lang.reflect.Array
 import java.util.*
+import kotlin.collections.ArrayList
 
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.
@@ -31,13 +33,18 @@ class LibraryFragment : Fragment() {
 
     //initialize lists and adapters for recyclerview
     private val games = arrayOf(arrayListOf<Games>(), arrayListOf(), arrayListOf())
+    private var gamesFilterFull = arrayOf(arrayListOf<Games>(), arrayListOf(), arrayListOf())
 
     private val gameAdapterUnplayed = GameAdapter(games[0], ::onGameClick)
     private val gameAdapterPlayed = GameAdapter(games[1], ::onGameClick)
     private val gameAdapterFinished = GameAdapter(games[2], ::onGameClick)
 
-    //private val userID = 76561198078057726
-    //76561198257218665
+    private val gameAdapters = arrayOf(gameAdapterUnplayed, gameAdapterPlayed, gameAdapterFinished)
+
+    //My library: 76561198257218665
+    //Friend Library: 76561198078057726
+
+    //add this in the future? https://wiki.teamfortress.com/wiki/WebAPI/ResolveVanityURL
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
@@ -46,7 +53,10 @@ class LibraryFragment : Fragment() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.menu_library, menu)
         super.onCreateOptionsMenu(menu, inflater)
+
+        (activity as MainActivity).supportActionBar?.setDisplayHomeAsUpEnabled(false)
 
         val searchItem: MenuItem = menu.findItem(R.id.search)
         val searchView: SearchView = searchItem.actionView as SearchView
@@ -57,7 +67,9 @@ class LibraryFragment : Fragment() {
             }
             //called each time the search text gets updated
             override fun onQueryTextChange(query: String?): Boolean {
-                if(query != null) filter(query)
+                if(query != null) {
+                    filter(query)
+                }
                 return true
             }
         })
@@ -84,13 +96,13 @@ class LibraryFragment : Fragment() {
     private fun initViews(){
         //init layout
         rvLibraryUnplayed.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
-        rvLibraryUnplayed.adapter = gameAdapterUnplayed
+        rvLibraryUnplayed.adapter = gameAdapters[0]
 
         rvLibraryPlayed.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
-        rvLibraryPlayed.adapter = gameAdapterPlayed
+        rvLibraryPlayed.adapter = gameAdapters[1]
 
         rvLibraryFinished.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
-        rvLibraryFinished.adapter = gameAdapterFinished
+        rvLibraryFinished.adapter = gameAdapters[2]
 
         createItemTouchHelper(0).attachToRecyclerView(rvLibraryUnplayed)
         createItemTouchHelper(1).attachToRecyclerView(rvLibraryPlayed)
@@ -102,8 +114,11 @@ class LibraryFragment : Fragment() {
      */
     private fun observeLibrary() {
         viewModel.library.observe(viewLifecycleOwner, {
+            //clear lists
             for (list in games) list.clear()
+            for (list in gamesFilterFull) list.clear()
 
+            //directly add api response to the correct lists
             for(game in it.response.games){
                 if(game.playtime_forever == 0) {
                     games[0].add(game)
@@ -114,8 +129,10 @@ class LibraryFragment : Fragment() {
                     game.completion = Completion.IN_PROGRESS
                 }
             }
+            //update the full list as well
+            for((index, list) in games.withIndex()) gamesFilterFull[index].addAll(list)
 
-            gameAdapterUnplayed.notifyDataSetChanged()
+            for(adapter in gameAdapters) adapter.notifyDataSetChanged()
         })
 
         // Observe the error message.
@@ -128,18 +145,16 @@ class LibraryFragment : Fragment() {
      * filter library based on toolbar search input
      */
     private fun filter(filterString: String){
-        val gamesFilter = arrayOf(arrayListOf<Games>(), arrayListOf(), arrayListOf())
+        for(list in games) list.clear()
 
-        for((index, list) in games.withIndex()) {
+        for((index, list) in gamesFilterFull.withIndex()) {
             for (game in list) {
-                if (game.name.toLowerCase().contains(filterString.toLowerCase())) {
-                    gamesFilter[index].add(game)
+                if (game.name.toLowerCase(Locale.ROOT).contains(filterString.toLowerCase(Locale.ROOT))) {
+                    games[index].add(game)
                 }
             }
         }
-        gameAdapterUnplayed.filterList(gamesFilter[0])
-        gameAdapterPlayed.filterList(gamesFilter[1])
-        gameAdapterFinished.filterList(gamesFilter[2])
+        for(adapter in gameAdapters) adapter.notifyDataSetChanged()
     }
 
     /**
@@ -153,8 +168,10 @@ class LibraryFragment : Fragment() {
 
         builder.setView(dialogLayout)
         builder.setPositiveButton(R.string.dialog_ok_btn) { _: DialogInterface, _: Int ->
-            viewModel.getSteamGames(userID.text.toString().toLong())
-            observeLibrary()
+            if(userID.text.isNotEmpty()){
+                viewModel.getSteamGames(userID.text.toString().toLong())
+                observeLibrary()
+            }
         }
         builder.show()
     }
@@ -172,7 +189,7 @@ class LibraryFragment : Fragment() {
     }
 
     /**
-     * YEAH
+     * Switch between recyclerviews on swipe
      */
     private fun createItemTouchHelper(adapterIndex: Int): ItemTouchHelper {
         val itemTouchHelperCallback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
@@ -185,32 +202,38 @@ class LibraryFragment : Fragment() {
             // Callback triggered when a user swiped an item.
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val position = viewHolder.adapterPosition
-                //ugly switch statement to change completion status of the games
+
+                //ugly when statement to change completion status of the games
+                val selectedGame = games[adapterIndex][position]
+
                 when (adapterIndex){
                     0 -> if(direction == ItemTouchHelper.RIGHT) {
-                        games[0][position].completion = Completion.IN_PROGRESS
-                        games[1].add(games[0][position])
+                        selectedGame.completion = Completion.IN_PROGRESS
+                        games[adapterIndex + 1].add(selectedGame)
+                        gamesFilterFull[adapterIndex + 1].add(selectedGame)
                     }
                     1 -> {
                         if(direction == ItemTouchHelper.RIGHT) {
-                            games[1][position].completion = Completion.FINISHED
-                            games[2].add(games[1][position])
+                            selectedGame.completion = Completion.FINISHED
+                            games[adapterIndex + 1].add(selectedGame)
+                            gamesFilterFull[adapterIndex + 1].add(selectedGame)
                         }
                         else {
-                            games[1][position].completion = Completion.UNPLAYED
-                            games[0].add(games[1][position])
+                            selectedGame.completion = Completion.UNPLAYED
+                            games[adapterIndex - 1].add(selectedGame)
+                            gamesFilterFull[adapterIndex - 1].add(selectedGame)
                         }
                     }
                     2 -> if(direction == ItemTouchHelper.LEFT) {
-                        games[2][position].completion = Completion.IN_PROGRESS
-                        games[1].add(games[2][position])
+                        selectedGame.completion = Completion.IN_PROGRESS
+                        games[adapterIndex - 1].add(selectedGame)
+                        gamesFilterFull[adapterIndex - 1].add(selectedGame)
                     }
                 }
-                games[adapterIndex].removeAt(position)
+                games[adapterIndex].remove(selectedGame)
+                gamesFilterFull[adapterIndex].remove(selectedGame)
 
-                gameAdapterUnplayed.notifyDataSetChanged()
-                gameAdapterPlayed.notifyDataSetChanged()
-                gameAdapterFinished.notifyDataSetChanged()
+                for(adapter in gameAdapters) adapter.notifyDataSetChanged()
             }
         }
         return ItemTouchHelper(itemTouchHelperCallback)

@@ -12,5 +12,5 @@
         android:hint="@string/userID"
         android:inputType="numberDecimal"
         android:padding="16dp"
-        android:textSize="24sp"/>
+        android:textSize="24sp" />
 </LinearLayout>
