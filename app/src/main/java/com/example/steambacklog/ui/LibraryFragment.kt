@@ -29,15 +29,19 @@ import kotlin.collections.ArrayList
  */
 class LibraryFragment : Fragment() {
 
+    private val UNPLAYED = 0
+    private val PLAYED = 1
+    private val FINISHED = 2
+
     private val viewModel: LibraryViewModel by activityViewModels()
 
     //initialize lists and adapters for recyclerview
     private val games = arrayOf(arrayListOf<Games>(), arrayListOf(), arrayListOf())
     private var gamesFilterFull = arrayOf(arrayListOf<Games>(), arrayListOf(), arrayListOf())
 
-    private val gameAdapterUnplayed = GameAdapter(games[0], ::onGameClick)
-    private val gameAdapterPlayed = GameAdapter(games[1], ::onGameClick)
-    private val gameAdapterFinished = GameAdapter(games[2], ::onGameClick)
+    private val gameAdapterUnplayed = GameAdapter(games[UNPLAYED], ::onGameClick)
+    private val gameAdapterPlayed = GameAdapter(games[PLAYED], ::onGameClick)
+    private val gameAdapterFinished = GameAdapter(games[FINISHED], ::onGameClick)
 
     private val gameAdapters = arrayOf(gameAdapterUnplayed, gameAdapterPlayed, gameAdapterFinished)
 
@@ -96,17 +100,17 @@ class LibraryFragment : Fragment() {
     private fun initViews(){
         //init layout
         rvLibraryUnplayed.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
-        rvLibraryUnplayed.adapter = gameAdapters[0]
+        rvLibraryUnplayed.adapter = gameAdapters[UNPLAYED]
 
         rvLibraryPlayed.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
-        rvLibraryPlayed.adapter = gameAdapters[1]
+        rvLibraryPlayed.adapter = gameAdapters[PLAYED]
 
         rvLibraryFinished.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
-        rvLibraryFinished.adapter = gameAdapters[2]
+        rvLibraryFinished.adapter = gameAdapters[FINISHED]
 
-        createItemTouchHelper(0).attachToRecyclerView(rvLibraryUnplayed)
-        createItemTouchHelper(1).attachToRecyclerView(rvLibraryPlayed)
-        createItemTouchHelper(2).attachToRecyclerView(rvLibraryFinished)
+        createItemTouchHelper(UNPLAYED).attachToRecyclerView(rvLibraryUnplayed)
+        createItemTouchHelper(PLAYED).attachToRecyclerView(rvLibraryPlayed)
+        createItemTouchHelper(FINISHED).attachToRecyclerView(rvLibraryFinished)
     }
 
     /**
@@ -121,11 +125,11 @@ class LibraryFragment : Fragment() {
             //directly add api response to the correct lists
             for(game in it.response.games){
                 if(game.playtime_forever == 0) {
-                    games[0].add(game)
+                    games[UNPLAYED].add(game)
                     game.completion = Completion.UNPLAYED
                 }
                 else {
-                    games[1].add(game)
+                    games[PLAYED].add(game)
                     game.completion = Completion.IN_PROGRESS
                 }
             }
