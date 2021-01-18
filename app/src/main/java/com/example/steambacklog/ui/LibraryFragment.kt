@@ -20,9 +20,11 @@ import com.example.steambacklog.model.Games
 import com.example.steambacklog.recyclerview.GameAdapter
 import com.example.steambacklog.viewmodel.LibraryViewModel
 import kotlinx.android.synthetic.main.fragment_library.*
-import java.lang.reflect.Array
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import java.util.*
-import kotlin.collections.ArrayList
 
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.
@@ -30,7 +32,7 @@ import kotlin.collections.ArrayList
 class LibraryFragment : Fragment() {
 
     private val UNPLAYED = 0
-    private val PLAYED = 1
+    private val IN_PROGRESS = 1
     private val FINISHED = 2
 
     private val viewModel: LibraryViewModel by activityViewModels()
@@ -40,10 +42,12 @@ class LibraryFragment : Fragment() {
     private var gamesFilterFull = arrayOf(arrayListOf<Games>(), arrayListOf(), arrayListOf())
 
     private val gameAdapterUnplayed = GameAdapter(games[UNPLAYED], ::onGameClick)
-    private val gameAdapterPlayed = GameAdapter(games[PLAYED], ::onGameClick)
+    private val gameAdapterPlayed = GameAdapter(games[IN_PROGRESS], ::onGameClick)
     private val gameAdapterFinished = GameAdapter(games[FINISHED], ::onGameClick)
 
     private val gameAdapters = arrayOf(gameAdapterUnplayed, gameAdapterPlayed, gameAdapterFinished)
+
+    private var userID: Long = 0
 
     //My library: 76561198257218665
     //Friend Library: 76561198078057726
@@ -103,13 +107,13 @@ class LibraryFragment : Fragment() {
         rvLibraryUnplayed.adapter = gameAdapters[UNPLAYED]
 
         rvLibraryPlayed.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
-        rvLibraryPlayed.adapter = gameAdapters[PLAYED]
+        rvLibraryPlayed.adapter = gameAdapters[IN_PROGRESS]
 
         rvLibraryFinished.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
         rvLibraryFinished.adapter = gameAdapters[FINISHED]
 
         createItemTouchHelper(UNPLAYED).attachToRecyclerView(rvLibraryUnplayed)
-        createItemTouchHelper(PLAYED).attachToRecyclerView(rvLibraryPlayed)
+        createItemTouchHelper(IN_PROGRESS).attachToRecyclerView(rvLibraryPlayed)
         createItemTouchHelper(FINISHED).attachToRecyclerView(rvLibraryFinished)
     }
 
@@ -118,25 +122,38 @@ class LibraryFragment : Fragment() {
      */
     private fun observeLibrary() {
         viewModel.library.observe(viewLifecycleOwner, {
-            //clear lists
-            for (list in games) list.clear()
-            for (list in gamesFilterFull) list.clear()
-
-            //directly add api response to the correct lists
-            for(game in it.response.games){
-                if(game.playtime_forever == 0) {
-                    games[UNPLAYED].add(game)
-                    game.completion = Completion.UNPLAYED
+            CoroutineScope(Dispatchers.IO).launch {
+                //clear lists
+                for (list in games) list.clear()
+                for (list in gamesFilterFull) list.clear()
+                //directly add api response to the correct lists
+                for (game in it.response.games) {
+                    //add new entries on loading api
+                    if (viewModel.gameDataOnce(game.appid, userID) == null) {
+                        if (game.playtime_forever == 0) {
+                            games[UNPLAYED].add(game)
+                            viewModel.insertGameData(game.appid, userID, Completion.UNPLAYED)
+                        } else {
+                            games[IN_PROGRESS].add(game)
+                            viewModel.insertGameData(game.appid, userID, Completion.IN_PROGRESS)
+                        }
+                    } else {
+                        when (viewModel.gameDataOnce(game.appid, userID)?.completion) {
+                            Completion.UNPLAYED -> games[UNPLAYED].add(game)
+                            Completion.IN_PROGRESS -> games[IN_PROGRESS].add(game)
+                            Completion.FINISHED -> games[FINISHED].add(game)
+                        }
+                    }
                 }
-                else {
-                    games[PLAYED].add(game)
-                    game.completion = Completion.IN_PROGRESS
+
+                //update the full list as well
+                CoroutineScope(Dispatchers.Main).launch {
+                    for ((index, list) in games.withIndex()) gamesFilterFull[index].addAll(list)
+
+                    for (adapter in gameAdapters) adapter.notifyDataSetChanged()
                 }
             }
-            //update the full list as well
-            for((index, list) in games.withIndex()) gamesFilterFull[index].addAll(list)
-
-            for(adapter in gameAdapters) adapter.notifyDataSetChanged()
+            Log.i("load", "Finished loading all database entries")
         })
 
         // Observe the error message.
@@ -168,12 +185,13 @@ class LibraryFragment : Fragment() {
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle(getString(R.string.change_user))
         val dialogLayout = layoutInflater.inflate(R.layout.change_user_dialog, null)
-        val userID = dialogLayout.findViewById<EditText>(R.id.txt_userID)
+        val tvUserID = dialogLayout.findViewById<EditText>(R.id.txt_userID)
 
         builder.setView(dialogLayout)
         builder.setPositiveButton(R.string.dialog_ok_btn) { _: DialogInterface, _: Int ->
-            if(userID.text.isNotEmpty()){
-                viewModel.getSteamGames(userID.text.toString().toLong())
+            if(tvUserID.text.isNotEmpty()){
+                userID = tvUserID.text.toString().toLong()
+                viewModel.getSteamGames(userID)
                 observeLibrary()
             }
         }
@@ -187,6 +205,11 @@ class LibraryFragment : Fragment() {
         //wrap selected game object in a bundle
         val args = Bundle()
         args.putParcelable(SELECTED_GAME, game)
+        args.putLong(USER_ID, userID)
+
+        //reset the list and fill it back up in case the user is searching something since the query gets removed without resetting the list
+        for (list in games) list.clear()
+        for ((index, list) in gamesFilterFull.withIndex()) games[index].addAll(list)
 
         //move to the gameview fragment with bundle
         findNavController().navigate(R.id.action_LibraryFragment_to_GameviewFragment, args)
@@ -210,34 +233,38 @@ class LibraryFragment : Fragment() {
                 //ugly when statement to change completion status of the games
                 val selectedGame = games[adapterIndex][position]
 
-                when (adapterIndex){
-                    0 -> if(direction == ItemTouchHelper.RIGHT) {
-                        selectedGame.completion = Completion.IN_PROGRESS
-                        games[adapterIndex + 1].add(selectedGame)
-                        gamesFilterFull[adapterIndex + 1].add(selectedGame)
-                    }
-                    1 -> {
-                        if(direction == ItemTouchHelper.RIGHT) {
-                            selectedGame.completion = Completion.FINISHED
-                            games[adapterIndex + 1].add(selectedGame)
-                            gamesFilterFull[adapterIndex + 1].add(selectedGame)
+                CoroutineScope(Dispatchers.IO).launch {
+                    val gameData = viewModel.gameDataOnce(selectedGame.appid, userID)
+                    CoroutineScope(Dispatchers.Main).launch {
+                        when (adapterIndex) {
+                            UNPLAYED -> if (direction == ItemTouchHelper.RIGHT) {
+                                viewModel.updateGameData(selectedGame.appid, userID, Completion.IN_PROGRESS, gameData?.rating, gameData?.note)
+                                games[adapterIndex + 1].add(selectedGame)
+                                gamesFilterFull[adapterIndex + 1].add(selectedGame)
+                            }
+                            IN_PROGRESS -> {
+                                if (direction == ItemTouchHelper.RIGHT) {
+                                    viewModel.updateGameData(selectedGame.appid, userID, Completion.FINISHED, gameData?.rating, gameData?.note)
+                                    games[adapterIndex + 1].add(selectedGame)
+                                    gamesFilterFull[adapterIndex + 1].add(selectedGame)
+                                } else {
+                                    viewModel.updateGameData(selectedGame.appid, userID, Completion.UNPLAYED, gameData?.rating, gameData?.note)
+                                    games[adapterIndex - 1].add(selectedGame)
+                                    gamesFilterFull[adapterIndex - 1].add(selectedGame)
+                                }
+                            }
+                            FINISHED -> if (direction == ItemTouchHelper.LEFT) {
+                                viewModel.updateGameData(selectedGame.appid, userID, Completion.IN_PROGRESS, gameData?.rating, gameData?.note)
+                                games[adapterIndex - 1].add(selectedGame)
+                                gamesFilterFull[adapterIndex - 1].add(selectedGame)
+                            }
                         }
-                        else {
-                            selectedGame.completion = Completion.UNPLAYED
-                            games[adapterIndex - 1].add(selectedGame)
-                            gamesFilterFull[adapterIndex - 1].add(selectedGame)
-                        }
-                    }
-                    2 -> if(direction == ItemTouchHelper.LEFT) {
-                        selectedGame.completion = Completion.IN_PROGRESS
-                        games[adapterIndex - 1].add(selectedGame)
-                        gamesFilterFull[adapterIndex - 1].add(selectedGame)
+                        games[adapterIndex].remove(selectedGame)
+                        gamesFilterFull[adapterIndex].remove(selectedGame)
+
+                        for (adapter in gameAdapters) adapter.notifyDataSetChanged()
                     }
                 }
-                games[adapterIndex].remove(selectedGame)
-                gamesFilterFull[adapterIndex].remove(selectedGame)
-
-                for(adapter in gameAdapters) adapter.notifyDataSetChanged()
             }
         }
         return ItemTouchHelper(itemTouchHelperCallback)

@@ -23,4 +23,6 @@
     <string name="txtPlaytime">Playtime:\u0020</string>
     <string name="txtCompletion">Completion Status:\u0020</string>
     <string name="addNote">Insert note…</string>
+    <string name="save">save</string>
+    <string name="updatetoast">Updated Data</string>
 </resources>

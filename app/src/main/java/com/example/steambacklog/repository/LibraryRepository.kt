@@ -28,12 +28,16 @@ class LibraryRepository {
         try {
             //timeout the request after 5 seconds
             val result = withTimeout(5_000) {
-                steamAPIService.getSteamLibrary(key = "7BE4749AE70DF6436AF3A189A6A1A9B6", userID, include_appinfo = true, include_played_free_games = true, format = "json")
+                steamAPIService.getSteamLibrary(key = "7BE4749AE70DF6436AF3A189A6A1A9B6",
+                        userID,
+                        include_appinfo = true,
+                        include_played_free_games = true,
+                        format = "json")
             }
 
             _library.value = result
         } catch (error: Throwable) {
-            throw LibraryRefreshError("Unable to refresh Library", error)
+            throw LibraryRefreshError("Unable to load library", error)
         }
     }
 
